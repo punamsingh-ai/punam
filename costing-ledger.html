@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F5EF;
+    --paper-raised:#FFFEFA;
+    --ink:#232320;
+    --ink-soft:#5B584E;
+    --rule:#D8D2C2;
+    --rule-strong:#B9B29C;
+    --red:#9B3226;
+    --red-soft:#C96F5E;
+    --green:#4B6B4B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:0;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:40px 32px 80px;
+  }
+  .masthead{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:18px;
+    margin-bottom:6px;
+  }
+  .masthead h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:32px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .masthead .sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:4px;
+    font-style:italic;
+    font-family:'Source Serif 4',serif;
+  }
+  .currency-field{
+    display:flex;
+    align-items:baseline;
+    gap:6px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .currency-field input{
+    width:44px;
+    text-align:center;
+    border:none;
+    border-bottom:1px solid var(--rule-strong);
+    background:transparent;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    color:var(--ink);
+    padding:2px 0;
+  }
+  .currency-field input:focus{outline:none;border-bottom-color:var(--red);}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:18px;
+    table-layout:fixed;
+  }
+  col.c-no{width:34px;}
+  col.c-name{width:auto;}
+  col.c-qty{width:88px;}
+  col.c-unit{width:110px;}
+  col.c-price{width:120px;}
+  col.c-cost{width:120px;}
+  col.c-del{width:36px;}
+
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    font-weight:500;
+    padding:0 8px 8px;
+    border-bottom:1px solid var(--rule-strong);
+  }
+  thead th.num{text-align:right;}
+
+  tbody tr{border-bottom:1px solid var(--rule);}
+  tbody tr:hover{background:rgba(155,50,38,0.03);}
+  tbody td{padding:6px 8px;vertical-align:middle;}
+  td.rownum{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--rule-strong);
+    text-align:right;
+    padding-right:10px;
+  }
+
+  input, select{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    padding:6px 4px;
+    border-radius:3px;
+  }
+  input:focus, select:focus{
+    outline:none;
+    background:var(--paper-raised);
+    box-shadow:0 0 0 1px var(--rule-strong);
+  }
+  input[type="number"]{
+    font-family:'IBM Plex Mono',monospace;
+    text-align:right;
+  }
+  td.cost-cell{
+    font-family:'IBM Plex Mono',monospace;
+    text-align:right;
+    font-weight:500;
+    padding-right:10px;
+  }
+  select{appearance:none;-webkit-appearance:none;cursor:pointer;}
+  .unit-wrap{position:relative;}
+  .unit-wrap::after{
+    content:"▾";
+    position:absolute;
+    right:6px;top:50%;
+    transform:translateY(-50%);
+    font-size:9px;
+    color:var(--ink-soft);
+    pointer-events:none;
+  }
+
+  .del-btn{
+    width:22px;height:22px;
+    border:none;background:transparent;
+    color:var(--rule-strong);
+    font-size:16px;
+    cursor:pointer;
+    line-height:1;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .del-btn:hover{color:var(--red);background:rgba(155,50,38,0.08);}
+
+  .add-row{
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:none;
+    border:1px dashed var(--rule-strong);
+    color:var(--ink-soft);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:4px;
+    cursor:pointer;
+    width:100%;
+    justify-content:center;
+  }
+  .add-row:hover{border-color:var(--red-soft);color:var(--red);}
+  .add-row .plus{font-size:15px;line-height:1;}
+
+  .totals{
+    margin-top:28px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+  }
+  .totals-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:4px 8px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .totals-row.grand{
+    margin-top:6px;
+    padding:14px 8px 6px;
+    border-top:2px solid var(--ink);
+    font-size:16px;
+    color:var(--ink);
+  }
+  .totals-row.grand .label{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+  }
+  .totals-row.grand .value{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:22px;
+    color:var(--red);
+    border-bottom:3px double var(--red);
+    padding-bottom:2px;
+  }
+  .totals-row .value{font-family:'IBM Plex Mono',monospace;}
+
+  .empty-hint{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12px;
+    font-style:italic;
+    font-family:'Source Serif 4',serif;
+    padding:18px 0 4px;
+  }
+
+  @media (max-width:640px){
+    .wrap{padding:24px 16px 60px;}
+    col.c-unit{width:84px;}
+    col.c-price{width:88px;}
+    col.c-cost{width:96px;}
+    thead th{font-size:9.5px;}
+    input,select{font-size:12.5px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Cost ledger</h1>
+      <div class="sub">itemized costing sheet</div>
+    </div>
+    <div class="currency-field">
+      currency
+      <input type="text" id="currency" value="₹" maxlength="3">
+    </div>
+  </div>
+
+  <table>
+    <colgroup>
+      <col class="c-no"><col class="c-name"><col class="c-qty">
+      <col class="c-unit"><col class="c-price"><col class="c-cost"><col class="c-del">
+    </colgroup>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Item</th>
+        <th class="num">Qty</th>
+        <th>Unit</th>
+        <th class="num">Price / unit</th>
+        <th class="num">Cost</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <button class="add-row" id="addRow"><span class="plus">+</span> Add item</button>
+  <div class="empty-hint" id="emptyHint" style="display:none;">Add your first item to start costing.</div>
+
+  <div class="totals">
+    <div class="totals-row">
+      <span class="label">Items</span>
+      <span class="value" id="itemCount">0</span>
+    </div>
+    <div class="totals-row grand">
+      <span class="label">Total expense</span>
+      <span class="value" id="grandTotal">0.00</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const UNITS = ["kg","g","litre","ml","number","dozen","meter","packet","box","other"];
+let rowId = 0;
+const rowsEl = document.getElementById('rows');
+const currencyEl = document.getElementById('currency');
+
+function fmt(n){
+  if(!isFinite(n)) n = 0;
+  return n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function makeRow(data){
+  data = data || {};
+  rowId++;
+  const tr = document.createElement('tr');
+  tr.dataset.id = rowId;
+
+  const unitOptions = UNITS.map(u => `<option value="${u}" ${data.unit===u?'selected':''}>${u}</option>`).join('');
+
+  tr.innerHTML = `
+    <td class="rownum"></td>
+    <td><input type="text" class="f-name" placeholder="Item name" value="${data.name||''}"></td>
+    <td><input type="number" class="f-qty" min="0" step="any" placeholder="0" value="${data.qty||''}"></td>
+    <td><div class="unit-wrap"><select class="f-unit">${unitOptions}</select></div></td>
+    <td><input type="number" class="f-price" min="0" step="any" placeholder="0.00" value="${data.price||''}"></td>
+    <td class="cost-cell f-cost">0.00</td>
+    <td><button class="del-btn" title="Remove item">×</button></td>
+  `;
+
+  rowsEl.appendChild(tr);
+
+  const qtyInput = tr.querySelector('.f-qty');
+  const priceInput = tr.querySelector('.f-price');
+  const costCell = tr.querySelector('.f-cost');
+  const delBtn = tr.querySelector('.del-btn');
+
+  function recalcRow(){
+    const q = parseFloat(qtyInput.value) || 0;
+    const p = parseFloat(priceInput.value) || 0;
+    costCell.textContent = fmt(q * p);
+    recalcTotal();
+  }
+
+  qtyInput.addEventListener('input', recalcRow);
+  priceInput.addEventListener('input', recalcRow);
+  delBtn.addEventListener('click', () => {
+    tr.remove();
+    renumber();
+    recalcTotal();
+  });
+
+  recalcRow();
+  renumber();
+  return tr;
+}
+
+function renumber(){
+  [...rowsEl.children].forEach((tr, i) => {
+    tr.querySelector('.rownum').textContent = i + 1;
+  });
+  document.getElementById('emptyHint').style.display = rowsEl.children.length ? 'none' : 'block';
+}
+
+function recalcTotal(){
+  let total = 0;
+  rowsEl.querySelectorAll('tr').forEach(tr => {
+    const q = parseFloat(tr.querySelector('.f-qty').value) || 0;
+    const p = parseFloat(tr.querySelector('.f-price').value) || 0;
+    total += q * p;
+  });
+  document.getElementById('grandTotal').textContent = currencyEl.value + ' ' + fmt(total);
+  document.getElementById('itemCount').textContent = rowsEl.children.length;
+}
+
+document.getElementById('addRow').addEventListener('click', () => {
+  makeRow();
+  const lastRow = rowsEl.lastElementChild;
+  lastRow.querySelector('.f-name').focus();
+  recalcTotal();
+});
+
+currencyEl.addEventListener('input', recalcTotal);
+
+// seed with three example-style blank rows
+makeRow();
+makeRow();
+makeRow();
+recalcTotal();
+</script>
+</body>
+</html>
